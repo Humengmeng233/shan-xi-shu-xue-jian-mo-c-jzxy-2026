@@ -1,0 +1,32 @@
+[project]
+name = "sxjm"
+version = "0.2.0"
+description = "分布式光伏、储能与购电计划优化"
+authors = [
+    { name = "caobaoqi6040", email = "caobaoqi6040@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "matplotlib>=3.11.1",
+    "numpy>=2.5.3",
+    "openpyxl>=3.1.5",
+    "pandas>=3.0.5",
+    "pandas-stubs~=3.0.5",
+    "scipy>=1.18.1",
+    "scipy-stubs~=1.18.1",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
