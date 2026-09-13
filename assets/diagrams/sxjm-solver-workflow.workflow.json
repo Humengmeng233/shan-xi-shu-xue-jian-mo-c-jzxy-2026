@@ -1,0 +1,401 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "SXJM 正式求解与滚动决策工作流",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "day-ahead-path",
+        "label": "日前主链",
+        "focus": [
+          "load-config",
+          "load-data",
+          "build-scenarios",
+          "solve-base",
+          "execute-controls",
+          "verify-mode",
+          "write-results"
+        ],
+        "note": "从参数与处理后数据出发，生成场景、求解基准计划并形成可验证结果。"
+      },
+      {
+        "id": "rolling-gate",
+        "label": "日内滚动门控",
+        "focus": [
+          "solve-base",
+          "refresh-forecast",
+          "compare-plans",
+          "value-gate",
+          "keep-plan",
+          "execute-controls"
+        ],
+        "note": "06:00、12:00、18:00 只重算剩余时段，门控决定是否更新购电计划。"
+      },
+      {
+        "id": "delivery-checks",
+        "label": "复核与交付",
+        "focus": [
+          "execute-controls",
+          "verify-mode",
+          "write-results",
+          "audit-validate"
+        ],
+        "note": "执行轨迹先通过物理检查，再写入模板并接受哈希、费用和测试复核。"
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "inputs",
+      "label": "输入与初始化"
+    },
+    {
+      "id": "forecast",
+      "label": "因果预测与场景"
+    },
+    {
+      "id": "planning",
+      "label": "优化计划"
+    },
+    {
+      "id": "rolling",
+      "label": "滚动门控"
+    },
+    {
+      "id": "exceptions",
+      "label": "保留方案",
+      "variant": "exception"
+    },
+    {
+      "id": "execution",
+      "label": "实际执行"
+    },
+    {
+      "id": "verification",
+      "label": "物理与费用复核"
+    },
+    {
+      "id": "delivery",
+      "label": "成果写出"
+    },
+    {
+      "id": "independent",
+      "label": "独立审计与验证"
+    }
+  ],
+  "phases": [
+    {
+      "id": "prepare",
+      "label": "准备",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "plan",
+      "label": "预测与计划",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "operate",
+      "label": "滚动执行与交付",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "groups": [
+    {
+      "id": "causal-boundary",
+      "label": "禁止读取未来实际值",
+      "lane": "forecast",
+      "fromCol": 2,
+      "toCol": 4,
+      "variant": "security"
+    },
+    {
+      "id": "gate-comparison",
+      "label": "同一场景集比较",
+      "lane": "rolling",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "load-config",
+    "load-data",
+    "build-scenarios",
+    "solve-base",
+    "refresh-forecast",
+    "compare-plans",
+    "value-gate",
+    "execute-controls",
+    "verify-mode",
+    "write-results",
+    "audit-validate"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "load-config"
+    ],
+    "allowedTerminals": [
+      "audit-validate"
+    ],
+    "requiredPaths": [
+      {
+        "from": "load-config",
+        "to": "write-results"
+      },
+      {
+        "from": "refresh-forecast",
+        "to": "execute-controls"
+      },
+      {
+        "from": "value-gate",
+        "to": "keep-plan"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "load-config",
+      "lane": "inputs",
+      "col": 0,
+      "type": "external",
+      "label": "解析命令参数",
+      "sublabel": "风险与场景参数",
+      "tag": "ModelConfig.validate"
+    },
+    {
+      "id": "load-data",
+      "lane": "inputs",
+      "col": 1,
+      "type": "database",
+      "label": "装载处理后数据",
+      "sublabel": "典型日 · 年度量 · 预报"
+    },
+    {
+      "id": "build-scenarios",
+      "lane": "forecast",
+      "col": 2,
+      "type": "backend",
+      "label": "构造因果场景",
+      "sublabel": "残差 · 校准 · 概率",
+      "tag": "CausalScenarioFactory"
+    },
+    {
+      "id": "solve-base",
+      "lane": "planning",
+      "col": 3,
+      "type": "backend",
+      "label": "00:00 基准计划",
+      "sublabel": "DRO/CVaR · LP/MILP",
+      "tag": "Q2 / Q3 / Q4"
+    },
+    {
+      "id": "refresh-forecast",
+      "lane": "forecast",
+      "col": 4,
+      "type": "backend",
+      "label": "更新场景",
+      "sublabel": "06 / 12 / 18 时",
+      "tag": "已执行时段冻结"
+    },
+    {
+      "id": "compare-plans",
+      "lane": "rolling",
+      "col": 4,
+      "type": "backend",
+      "label": "方案比较",
+      "sublabel": "节省下界 · 尾部应急"
+    },
+    {
+      "id": "value-gate",
+      "lane": "rolling",
+      "col": 5,
+      "type": "security",
+      "label": "价值门控",
+      "sublabel": "经济性或应急风险改善",
+      "tag": "接受 / 拒绝"
+    },
+    {
+      "id": "keep-plan",
+      "lane": "exceptions",
+      "col": 5,
+      "type": "messagebus",
+      "label": "保留原购电计划",
+      "sublabel": "仍可重优化储能动作"
+    },
+    {
+      "id": "execute-controls",
+      "lane": "execution",
+      "col": 5,
+      "type": "backend",
+      "label": "实际执行",
+      "sublabel": "充放电 · 应急电 · SOC"
+    },
+    {
+      "id": "verify-mode",
+      "lane": "verification",
+      "col": 5,
+      "type": "security",
+      "label": "物理与费用复核",
+      "sublabel": "平衡 · SOC · 费用"
+    },
+    {
+      "id": "write-results",
+      "lane": "delivery",
+      "col": 5,
+      "type": "database",
+      "label": "写出正式结果",
+      "sublabel": "工作簿 · 明细 · 报告"
+    },
+    {
+      "id": "audit-validate",
+      "lane": "independent",
+      "col": 5,
+      "type": "security",
+      "label": "审计与独立验证",
+      "sublabel": "哈希 · 结构 · 测试"
+    }
+  ],
+  "edges": [
+    {
+      "id": "config-to-data",
+      "from": "load-config",
+      "to": "load-data",
+      "label": "校验通过",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "data-to-scenarios",
+      "from": "load-data",
+      "to": "build-scenarios",
+      "label": "只读历史与已发布预报",
+      "variant": "security",
+      "role": "main"
+    },
+    {
+      "id": "scenarios-to-base",
+      "from": "build-scenarios",
+      "to": "solve-base",
+      "label": "净负荷/价格路径与概率",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "base-to-refresh",
+      "from": "solve-base",
+      "to": "refresh-forecast",
+      "label": "滚动模式",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "refresh-to-compare",
+      "from": "refresh-forecast",
+      "to": "compare-plans",
+      "label": "更新信息集",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "compare-to-gate",
+      "from": "compare-plans",
+      "to": "value-gate",
+      "label": "同场景成本与风险差",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "gate-to-execute",
+      "from": "value-gate",
+      "to": "execute-controls",
+      "label": "接受候选计划",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "gate-to-keep",
+      "from": "value-gate",
+      "to": "keep-plan",
+      "label": "不满足门槛",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "keep-to-execute",
+      "from": "keep-plan",
+      "to": "execute-controls",
+      "label": "沿用计划",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "id": "base-direct-execute",
+      "from": "solve-base",
+      "to": "execute-controls",
+      "label": "非滚动模式 / 当前执行段",
+      "role": "branch",
+      "route": "return-left"
+    },
+    {
+      "id": "execute-to-verify",
+      "from": "execute-controls",
+      "to": "verify-mode",
+      "label": "时段轨迹与费用",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "verify-to-write",
+      "from": "verify-mode",
+      "to": "write-results",
+      "label": "检查通过",
+      "variant": "security",
+      "role": "main"
+    },
+    {
+      "id": "write-to-audit",
+      "from": "write-results",
+      "to": "audit-validate",
+      "label": "交付物复核",
+      "variant": "security",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "信息边界",
+      "items": [
+        "目标日决策只读取此前历史和当前发布时刻可用数据",
+        "滚动更新只修改尚未执行的时段",
+        "未知电价模式保留净负荷与价格残差的同期相关性"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "门控逻辑",
+      "items": [
+        "保留方案与候选方案使用同一场景集比较",
+        "经济性门槛采用 Bootstrap 节省下分位",
+        "尾部应急量显著下降时可因风险理由接受调整"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "完成条件",
+      "items": [
+        "执行后 SOC 跨日连续且能量平衡",
+        "工作簿、明细、摘要和图表同步写出",
+        "输入哈希、费用重算和回归测试形成独立证据"
+      ]
+    }
+  ]
+}

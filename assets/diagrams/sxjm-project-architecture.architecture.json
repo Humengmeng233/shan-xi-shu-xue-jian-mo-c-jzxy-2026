@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "SXJM 光伏、储能与购电计划优化：项目架构",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1360,
+      760
+    ],
+    "views": [
+      {
+        "id": "data-to-solution",
+        "label": "从数据到求解",
+        "focus": [
+          "raw-inputs",
+          "preprocess",
+          "processed-data",
+          "scenario-factory",
+          "optimization-core",
+          "solver"
+        ],
+        "note": "沿主链查看原始附件如何变成因果场景与优化决策。"
+      },
+      {
+        "id": "analysis-branch",
+        "label": "特征分析支路",
+        "focus": [
+          "raw-inputs",
+          "feature-pipeline",
+          "feature-store"
+        ],
+        "note": "特征工程和数据诊断服务于分析，但不是正式求解前置条件。"
+      },
+      {
+        "id": "delivery-evidence",
+        "label": "交付与复核",
+        "focus": [
+          "solver",
+          "reporting",
+          "deliverables",
+          "audit-validation"
+        ],
+        "note": "结果工作簿、图表、审计记录与独立验证共同构成交付证据。"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cli",
+      "type": "external",
+      "label": "统一命令入口",
+      "pos": [
+        34.0,
+        70
+      ],
+      "size": [
+        153.0,
+        72
+      ]
+    },
+    {
+      "id": "raw-inputs",
+      "type": "database",
+      "label": "原始附件与模板",
+      "sublabel": "附件1—4.xlsx · result*.xlsx",
+      "pos": [
+        34.0,
+        300
+      ],
+      "size": [
+        153.0,
+        72
+      ]
+    },
+    {
+      "id": "preprocess",
+      "type": "backend",
+      "label": "数据预处理",
+      "sublabel": "10分钟网格 · 长表 · 质检",
+      "pos": [
+        255.0,
+        300
+      ],
+      "size": [
+        161.5,
+        72
+      ]
+    },
+    {
+      "id": "processed-data",
+      "type": "database",
+      "label": "标准化模型输入",
+      "sublabel": "data/processed · 365×144",
+      "pos": [
+        501.5,
+        300
+      ],
+      "size": [
+        153.0,
+        72
+      ]
+    },
+    {
+      "id": "feature-pipeline",
+      "type": "backend",
+      "label": "特征与数据诊断",
+      "sublabel": "缩放 · 质量报告 · 诊断图",
+      "pos": [
+        255.0,
+        530
+      ],
+      "size": [
+        161.5,
+        72
+      ]
+    },
+    {
+      "id": "feature-store",
+      "type": "database",
+      "label": "特征仓",
+      "sublabel": "data/feature_store",
+      "pos": [
+        501.5,
+        530
+      ],
+      "size": [
+        153.0,
+        72
+      ]
+    },
+    {
+      "id": "scenario-factory",
+      "type": "backend",
+      "label": "因果预测与场景工厂",
+      "sublabel": "历史残差 · 校准区间 · 场景缩减",
+      "tag": "只读取当时可得信息",
+      "pos": [
+        697.0,
+        150
+      ],
+      "size": [
+        178.5,
+        82
+      ]
+    },
+    {
+      "id": "optimization-core",
+      "type": "backend",
+      "label": "优化内核",
+      "sublabel": "确定性 LP · DRO/CVaR · MILP 回退",
+      "pos": [
+        697.0,
+        420
+      ],
+      "size": [
+        178.5,
+        82
+      ]
+    },
+    {
+      "id": "solver",
+      "type": "backend",
+      "label": "正式求解编排",
+      "sublabel": "Q1—Q4 · 日前计划 · 滚动门控",
+      "tag": "src/solver.py",
+      "pos": [
+        926.5,
+        300
+      ],
+      "size": [
+        161.5,
+        82
+      ]
+    },
+    {
+      "id": "reporting",
+      "type": "frontend",
+      "label": "报告与可视化",
+      "sublabel": "费用 · 预测 · 门控 · 调度图",
+      "pos": [
+        1164.5,
+        70
+      ],
+      "size": [
+        161.5,
+        72
+      ]
+    },
+    {
+      "id": "deliverables",
+      "type": "database",
+      "label": "正式交付结果",
+      "sublabel": "工作簿 · 明细 · 报告 · 图表",
+      "pos": [
+        1164.5,
+        300
+      ],
+      "size": [
+        161.5,
+        76
+      ]
+    },
+    {
+      "id": "audit-validation",
+      "type": "security",
+      "label": "审计与独立验证",
+      "sublabel": "哈希 · 物理 · 费用 · 测试",
+      "pos": [
+        1164.5,
+        550
+      ],
+      "size": [
+        178.5,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "raw-to-preprocess",
+      "from": "raw-inputs",
+      "to": "preprocess",
+      "variant": "emphasis"
+    },
+    {
+      "id": "preprocess-to-processed",
+      "from": "preprocess",
+      "to": "processed-data",
+      "label": "CSV / JSON",
+      "variant": "emphasis"
+    },
+    {
+      "id": "processed-to-scenario",
+      "from": "processed-data",
+      "to": "scenario-factory",
+      "label": "历史序列与预报",
+      "variant": "emphasis"
+    },
+    {
+      "id": "processed-to-optimization",
+      "from": "processed-data",
+      "to": "optimization-core",
+      "label": "物理量与参数",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scenario-to-solver",
+      "from": "scenario-factory",
+      "to": "solver",
+      "label": "场景与概率",
+      "variant": "emphasis"
+    },
+    {
+      "id": "optimization-to-solver",
+      "from": "optimization-core",
+      "to": "solver",
+      "label": "计划与控制",
+      "variant": "emphasis"
+    },
+    {
+      "id": "solver-to-reporting",
+      "from": "solver",
+      "to": "reporting",
+      "label": "模式指标",
+      "fromSide": "top",
+      "toSide": "left",
+      "via": [
+        [
+          1007.25,
+          250
+        ],
+        [
+          1144.1,
+          250
+        ],
+        [
+          1144.1,
+          106
+        ]
+      ]
+    },
+    {
+      "id": "solver-to-deliverables",
+      "from": "solver",
+      "to": "deliverables",
+      "label": "写回模板与明细",
+      "variant": "emphasis",
+      "labelAt": [
+        1126.25,
+        285
+      ]
+    },
+    {
+      "id": "reporting-to-deliverables",
+      "from": "reporting",
+      "to": "deliverables",
+      "label": "图表与说明",
+      "labelDy": 24
+    },
+    {
+      "id": "deliverables-to-audit",
+      "from": "deliverables",
+      "to": "audit-validation",
+      "label": "独立复核",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "raw-to-features",
+      "from": "raw-inputs",
+      "to": "feature-pipeline",
+      "label": "分析副本",
+      "variant": "dashed"
+    },
+    {
+      "id": "features-to-store",
+      "from": "feature-pipeline",
+      "to": "feature-store",
+      "label": "特征表",
+      "variant": "dashed"
+    },
+    {
+      "id": "cli-to-preprocess",
+      "from": "cli",
+      "to": "preprocess",
+      "label": "命令分派"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "数据边界",
+      "items": [
+        "原始附件与模板保持只读",
+        "正式求解只消费 data/processed 中的物理量",
+        "feature_store 是分析支路，不进入正式求解主链"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "模型核心",
+      "items": [
+        "10 分钟粒度能量平衡与 SOC 连续性",
+        "日前因果预测和历史场景缩减",
+        "有限支持 DRO、CVaR 与滚动价值门控"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "交付证据",
+      "items": [
+        "Q1—Q4 工作簿与逐时段明细",
+        "输入哈希和求解器审计轨迹",
+        "物理、费用、预测与回归测试独立复核"
+      ]
+    }
+  ]
+}
