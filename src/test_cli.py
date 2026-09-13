@@ -6,9 +6,18 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from main import main
+from src.arguments import ArgumentParser
 
 
 class TestCommandLine(unittest.TestCase):
+    def test_explicit_help_configuration(self):
+        """显式启用帮助不冲突，禁用后可自定义帮助选项。"""
+        parser = ArgumentParser(add_help=True)
+        self.assertIn("显示帮助并退出", parser.format_help())
+        parser = ArgumentParser(add_help=False)
+        parser.add_argument("--help", action="store_true")
+        self.assertTrue(parser.parse_args(["--help"]).help)
+
     def test_question_command_forwards_scope(self):
         """分问入口附加正确的求解范围。"""
         for number in range(1, 5):
