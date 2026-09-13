@@ -8,11 +8,14 @@ class ArgumentParser(argparse.ArgumentParser):
     """统一帮助标题、用法前缀与退出提示。"""
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault("add_help", False)
+        # 由本类注册中文帮助，避免父类再次注册相同的选项。
+        add_help = kwargs.pop("add_help", True)
+        kwargs["add_help"] = False
         super().__init__(*args, **kwargs)
         self._positionals.title = "位置参数"
         self._optionals.title = "可选参数"
-        self.add_argument("-h", "--help", action="help", help="显示帮助并退出")
+        if add_help:
+            self.add_argument("-h", "--help", action="help", help="显示帮助并退出")
 
     def format_usage(self):
         return super().format_usage().replace("usage: ", "用法：", 1)
