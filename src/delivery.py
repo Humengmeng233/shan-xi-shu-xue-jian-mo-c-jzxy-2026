@@ -117,8 +117,9 @@ def publish_results(source: Path, destination: Path, info: dict, figures: Path,
             value = info["solver_parameters"].get(name, default)
             if value != default:
                 flags += f" --{name.replace('_', '-')} {value}"
-        readme_link = os.path.relpath(PROJECT_ROOT / "README.md", folder).replace("\\", "/")
-        lines = [f"# {title}", "", f"完整模型与本问推导见 [项目 README]({readme_link}#{command})。", "",
+        chapter = {"q1": "04-question-1.md", "q2": "05-question-2.md", "q3": "06-question-3.md", "q4": "07-question-4.md"}[command]
+        readme_link = os.path.relpath(PROJECT_ROOT / "docs" / chapter, folder).replace("\\", "/")
+        lines = [f"# {title}", "", f"完整模型与本问推导见 [问题求解章节]({readme_link})。", "",
                  "## 运行方式", "", "在项目根目录执行：", "", "```powershell", "uv sync",
                  f"uv run python main.py {command}{flags}", "```", "",
                  "## 程序输出", "", "下列数值由保存的计算结果生成；机器可读数据见 [运行结果](运行结果.json)。", "",
